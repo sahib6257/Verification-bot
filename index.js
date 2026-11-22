@@ -1,3 +1,4 @@
+const http = require("http");
 const fs = require("fs");
 const {
   Client,
@@ -9,6 +10,18 @@ const {
   PermissionFlagsBits,
 } = require("discord.js");
 
+// 1. HTTP Health Check Server (Required for Render Web Services)
+const PORT = process.env.PORT || 10000;
+http
+  .createServer((req, res) => {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("DonutSMP Verification Bot is online!");
+  })
+  .listen(PORT, "0.0.0.0", () => {
+    console.log(`🌐 HTTP server listening on port ${PORT}`);
+  });
+
+// 2. Discord Client Setup
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers],
 });
@@ -20,7 +33,7 @@ if (fs.existsSync(DB_FILE)) {
 }
 const saveDB = () => fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
 
-// Helper: Formats nickname as "DiscordName [IGN]" within Discord's 32-char limit
+// Helper: Formats nickname as "DisplayName [IGN]" within Discord's 32-char limit
 function formatBracketNickname(member, ign) {
   const bracket = ` [${ign}]`;
   const maxBaseLength = 32 - bracket.length;
@@ -236,7 +249,6 @@ client.on("interactionCreate", async (interaction) => {
         if (cfg.verifiedRoleId) await member.roles.add(cfg.verifiedRoleId).catch(() => {});
         if (cfg.unverifiedRoleId) await member.roles.remove(cfg.unverifiedRoleId).catch(() => {});
 
-        // Set nickname to "DisplayName [IGN]"
         const bracketNick = formatBracketNickname(member, req.ign);
         await member.setNickname(bracketNick).catch(() => {});
 
@@ -273,9 +285,9 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
-client.once("ready", () => {
+client.once("clientReady", () => {
   console.log(`✅ Minecraft Verification Bot online as ${client.user.tag}`);
 });
 
 client.login(process.env.BOT_TOKEN);
-          
+        
